@@ -8,7 +8,19 @@ namespace lw1
 {
 	public class CMealy : Automat
     {
-        const string NEW_POINT_NAME_PART = "q";
+        const string NEW_POINT_NAME_PART = "S";
+
+        public void PrintAutomatToFile()
+        {
+            _ws.WriteLine(FromStringListToString(_states));
+
+            for (int i = 0; i < _inputSignals.Count(); i++)
+            {
+                _ws.Write(_inputSignals[i]);
+                _ws.Write(FromStringListToString(_signalsActions[i]));
+                _ws.Write("\n");
+            }
+        }
 
         public CMoore TranslateToMoore()
         {

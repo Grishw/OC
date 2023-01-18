@@ -6,8 +6,8 @@ using System.Reflection;
 
 namespace lw2
 {
-	public class Mealy : Automat
-	{
+    public class Mealy : Automat
+    {
         public override void GetDataFromFile()
         {
             _states = _rs.ReadLine().Split(';').Skip(1).ToList();
@@ -44,7 +44,45 @@ namespace lw2
             }
         }
 
-        private List<List<int>> GetSignalActionLinkState()
+
+        // Set param to save new state
+        //
+        private void SetNewStateParam(
+            ref Dictionary<string, int> oldStateToNewStateLink,
+            ref int newStateCount,
+            ref List<string> newStates,
+            Dictionary<string, int> StateToEquivalentClassLink)
+        {
+            string commonNewStateName = "q";
+            List<int> alredyAddToNewStates = new List<int>();
+
+            foreach(KeyValuePair<string, int> entry in StateToEquivalentClassLink)
+            {
+                if (!alredyAddToNewStates.Contains(entry.Value))
+                {
+                    alredyAddToNewStates.Add(entry.Value);
+                    oldStateToNewStateLink[entry.Key] = newStateCount;
+                    newStates.Add(commonNewStateName + newStateCount.ToString());
+                    newStateCount++;
+                }
+                else
+                {
+                    oldStateToNewStateLink[entry.Key] = alredyAddToNewStates.IndexOf(entry.Value);
+                }
+            }
+        }
+
+        // Get list of list SignalActionToStateLink:
+        // what: get signalAction go to new state
+        //
+        //   j -> _inputSignal(list)
+        //   i -> _state(list)
+        // [j][i] -> index of state in _state to wich go to
+        //
+        // a0 --z1--> index(new state)
+        // a0 --z2--> index(new state)
+        //
+        private List<List<int>> GetSignalActionToStateLink()
         {
             List<List<int>> signalActionLinkState = new List<List<int>>();
             for (int j = 0; j < _signalsActions.Count(); j++)
@@ -60,68 +98,14 @@ namespace lw2
             return signalActionLinkState;
         }
 
-        private Dictionary<string, int> GetEquivalentClasses(
-            ref List<List<string>> signalActionLinkEquivalentClass)
-        {
-            Dictionary<string, int> equivalentClasses = new Dictionary<string, int>();
-            int index = 0;
-            for (int i = 0; i < _states.Count(); i++)
-            {
-                string key = signalActionLinkEquivalentClass[0][i];
-                for (int j = 1; j < signalActionLinkEquivalentClass.Count(); j++)
-                {
-                    key += "/" + signalActionLinkEquivalentClass[j][i];
-                }
 
-                if (!equivalentClasses.ContainsKey(key))
-                {
-                    equivalentClasses[key] = index;
-                    index++;
-                }
-            }
-
-            return equivalentClasses;
-        }
-
-        private Dictionary<string, int> GetStateToEquivalentClassLink(
-            ref Dictionary<string, int> EquivalentClass,
-            ref List<List<string>> signalActionLinkState)
-        {
-            Dictionary<string, int> stateToEquivalentClassLink = new Dictionary<string, int>();
-            for (int i = 0; i < _states.Count(); i++)
-            {
-                string key = signalActionLinkState[0][i];
-                for (int j = 1; j < signalActionLinkState.Count(); j++)
-                {
-                    key += "/" + signalActionLinkState[j][i];
-                }
-
-                stateToEquivalentClassLink[_states[i]] = EquivalentClass[key];
-            }
-
-            return stateToEquivalentClassLink;
-        }
-
-        private List<List<string>> GetSignalActionLinkEquivalentClass(
-            ref List<List<int>> signalActionLinkState,
-            ref Dictionary<string, int> oldStateToEquivalentClassLink)
-        {
-            List<List<string>> signalActionLinkEquivalentClass = new List<List<string>>();
-
-            for (int j = 0; j < signalActionLinkState.Count(); j++)
-            {
-                List<string> elem = new List<string>();
-                for (int i = 0; i < signalActionLinkState[j].Count(); i++)
-                {
-                    elem.Add(oldStateToEquivalentClassLink[_states[signalActionLinkState[j][i]]].ToString());
-                }
-                signalActionLinkEquivalentClass.Add(elem);
-            }
-
-            return signalActionLinkEquivalentClass;
-        }
-
-        private List<List<string>> CreateFirstSignalActionLinkEquivalentClass()
+        //Get list of list:
+        //
+        //   j -> _inputSignal(list)
+        //   i -> _state(list)
+        // [j][i] -> outputSignal
+        //
+        private List<List<string>> CreateFirstSignalActionToEquivalentClassLink()
         {
             List<List<string>> firstSignalActionLinkEquivalentClass = new List<List<string>>();
 
@@ -138,23 +122,24 @@ namespace lw2
             return firstSignalActionLinkEquivalentClass;
         }
 
-
-        private List<int> CreateNewStates(
-                ref Dictionary<string, int> newStateToEquivalentClassLink)
+        // Create first State To classes of Equivalent
+        //
+        //   first -> string of (state name)
+        //   second -> int index of class
+        //
+        //   a0 -> 0
+        //   a2 -> 0
+        //
+        private Dictionary<string, int> GetFirstStateToEquivalentClassLink(
+             List<List<string>> signalActionLinkState)
         {
-            List<int> stateIndex = new List<int>();
-            List<int> alredyAddToStatesIndex = new List<int>();
-
-            foreach(KeyValuePair<string, int> entry in newStateToEquivalentClassLink)
+            Dictionary<string, int> stateToEquivalentClassLink = new Dictionary<string, int>();
+            for (int i = 0; i < _states.Count(); i++)
             {
-                if (!alredyAddToStatesIndex.Contains(entry.Value))
-                {
-                    alredyAddToStatesIndex.Add(entry.Value);
-                    stateIndex.Add(_states.IndexOf(entry.Key));
-                }
+                stateToEquivalentClassLink[_states[i]] = 0;
             }
+            return stateToEquivalentClassLink;
 
-            return stateIndex;
         }
 
         public override void Minimize()
@@ -166,27 +151,39 @@ namespace lw2
             RemoveInaccessibleStates();
 
             // const on run time
-            List<List<int>> signalActionLinkState = GetSignalActionLinkState(); // a0 --z1--> index(a10); a0 --z2--> index(a1)
+            List<List<int>> signalActionToStateLink = GetSignalActionToStateLink();
 
-            //prepare some data
-            List<List<string>> firstSignalActionLinkEquivalentClass = CreateFirstSignalActionLinkEquivalentClass(); // a0 --z1--> 1(old: a10 -> 1); a0 --z2--> 2(old: a1 -> 2)
+            // prepare some data
+            List<List<string>> firstSignalActionLinkEquivalentClass = CreateFirstSignalActionToEquivalentClassLink();
 
-            //first step
-            // GetEquivalentClasses +add lastEquivalentClasses;
+            Dictionary<string, int> firstStateToEquivalentClassLink = GetFirstStateToEquivalentClassLink(
+                 firstSignalActionLinkEquivalentClass);
+
+            // first step
             Dictionary<string, int> oldEquivalentClasses = GetEquivalentClasses(
-                ref firstSignalActionLinkEquivalentClass); // {a0} 1/2 -> 1; {a2} 1/3 -> 2
-            Dictionary<string, int> oldStateToEquivalentClassLink = GetStateToEquivalentClassLink(
-                ref oldEquivalentClasses, ref firstSignalActionLinkEquivalentClass); // a0 -> 1; a2 -> 2
+                 firstSignalActionLinkEquivalentClass,
+                 firstStateToEquivalentClassLink);
 
-            //next steps
+            Dictionary<string, int> oldStateToEquivalentClassLink = GetStateToEquivalentClassLink(
+                 oldEquivalentClasses,
+                 firstSignalActionLinkEquivalentClass,
+                 firstStateToEquivalentClassLink); 
+
+            // next steps
             do
             {
-                List<List<string>> signalActionLinkEquivalentClass = GetSignalActionLinkEquivalentClass(
-                ref signalActionLinkState, ref oldStateToEquivalentClassLink); // a0 --z1--> 1(old: a10 -> 1); a0 --z2--> 2(old: a1 -> 2)
+                List<List<string>> signalActionLinkEquivalentClass = GetSignalActionToEquivalentClassLink(
+                 signalActionToStateLink,
+                 oldStateToEquivalentClassLink);
+                
                 Dictionary<string, int> newEquivalentClasses = GetEquivalentClasses(
-                    ref signalActionLinkEquivalentClass); // {a0} 1/2 -> 1; {a2} 1/3 -> 2
+                     signalActionLinkEquivalentClass,
+                     oldStateToEquivalentClassLink);
+
                 Dictionary<string, int> newStateToEquivalentClassLink = GetStateToEquivalentClassLink(
-                    ref newEquivalentClasses, ref signalActionLinkEquivalentClass); // a0 -> 1; a2 -> 2
+                     newEquivalentClasses,
+                     signalActionLinkEquivalentClass,
+                     oldStateToEquivalentClassLink); 
 
                 if (Enumerable.SequenceEqual(oldStateToEquivalentClassLink, newStateToEquivalentClassLink))
                 {
@@ -201,27 +198,36 @@ namespace lw2
 
             //after minimize
             //1 create new states
-            List<int> statesIndex = CreateNewStates(ref oldStateToEquivalentClassLink);
-            List<string> states = new List<string>();
-            foreach(int index in statesIndex)
-            {
-                states.Add(_states[index]);
-            }
+            Dictionary<string, int> oldStateToNewStateLink = new Dictionary<string, int>();
+            int newStateCount = 0;
+            List<string> newStates = new List<string>();
+
+            SetNewStateParam(
+                ref oldStateToNewStateLink,
+                ref newStateCount,
+                ref newStates,
+                oldStateToEquivalentClassLink);
+
             //2 create new signalsActions by states
-            List<List<string>> signalsActions = new List<List<string>>();
+            List<List<string>> newSignalsActions = new List<List<string>>();
             for (int j = 0; j < _inputSignals.Count(); j++)
             {
                 List<string> elem = new List<string>();
-                foreach (int index in statesIndex)
+                for(int index = 0; index < newStates.Count(); index++)
                 {
-                    elem.Add(_signalsActions[j][index]);
+                    string oldAction = _signalsActions[j][index];
+                    string newAction = newStates[oldStateToNewStateLink[(oldAction.Split("/")[0])]] +
+                        "/" + oldAction.Split("/")[1];
+                    elem.Add(newAction);
                 }
-                signalsActions.Add(elem);
+                newSignalsActions.Add(elem);
             }
+
             //3 _states = states
-            _states = states;
+            _states = newStates;
+
             //4 _signalsActions = signalsActions
-            _signalsActions = signalsActions;
+            _signalsActions = newSignalsActions;
         }
 
         public Mealy(StreamReader rs, StreamWriter ws)

@@ -10,6 +10,19 @@ namespace lw1
     {
         private static List<string> _outputSignals = new List<string>();
 
+        public void PrintAutomatToFile()
+        {
+            _ws.WriteLine(FromStringListToString(_outputSignals));
+            _ws.WriteLine(FromStringListToString(_states));
+
+            for (int i = 0; i < _inputSignals.Count(); i++)
+            {
+                _ws.Write(_inputSignals[i]);
+                _ws.Write(FromStringListToString(_signalsActions[i]));
+                _ws.Write("\n");
+            }
+        }
+
         public CMealy TranslateToMealy()
         {
             List<List<string>> mealySignalsActions = new List<List<string>>();

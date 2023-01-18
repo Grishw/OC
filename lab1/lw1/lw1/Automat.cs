@@ -27,18 +27,6 @@ namespace lw1
             return str;
         }
 
-        public void PrintAutomatToFile()
-        {
-            _ws.WriteLine(FromStringListToString(_states));
-
-            for (int i = 0; i < _inputSignals.Count(); i++)
-            {
-                _ws.Write(_inputSignals[i]);
-                _ws.Write(FromStringListToString(_signalsActions[i]));
-                _ws.Write("\n");
-            }
-        }
-
         public virtual void GetDataFromFile()
         {
 

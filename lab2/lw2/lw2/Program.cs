@@ -14,6 +14,8 @@ namespace lw2
         {
             Moore moore = new Moore(rs, ws);
             moore.GetDataFromFile();
+            moore.Minimize();
+            moore.PrintAutomatToFile();
         }
 
         static void MealyMinimize(StreamReader rs, StreamWriter ws)
