@@ -27,54 +27,6 @@ namespace lw2
             return str;
         }
 
-        public void PrintAutomatToFile()
-        {
-            _ws.WriteLine(FromStringListToString(_states));
-
-            for (int i = 0; i < _inputSignals.Count(); i++)
-            {
-                _ws.Write(_inputSignals[i]);
-                _ws.Write(FromStringListToString(_signalsActions[i]));
-                _ws.Write("\n");
-            }
-        }
-
-        protected HashSet<string> GetAccessibleStateSet()
-        {
-            HashSet<string> accessibleState = new HashSet<string>();
-            for (int j = 0; j < _signalsActions.Count(); j++)
-            {
-                for (int i = 0; i < _signalsActions[j].Count(); i++)
-                {
-                    string elem = _signalsActions[j][i].Split("/")[0];
-                    if (!accessibleState.Contains(elem))
-                    {
-                        accessibleState.Add(elem);
-                        if (accessibleState.Count() == _states.Count())
-                        {
-                            return new HashSet<string>(_states);
-                        }
-                    }
-
-                }
-            }
-
-            return accessibleState;
-        }
-
-        protected HashSet<string> GetInaccessibleStateSet(ref HashSet<string> accessibleState)
-        {
-            HashSet<string> inaccessibleState = new HashSet<string>();
-            foreach (string state in _states)
-            {
-                if (!accessibleState.Contains(state))
-                {
-                    inaccessibleState.Add(state);
-                }
-            }
-            return inaccessibleState;
-        }
-
         // Get Dictionary newEquivalentClasses:
         //
         //   first -> string of (oldClass[i]):(outputSignal[0][i])/(outputSignal[1][i])/(outputSignal[2][i])/...

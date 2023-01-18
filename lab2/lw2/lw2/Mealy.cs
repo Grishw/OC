@@ -8,6 +8,18 @@ namespace lw2
 {
     public class Mealy : Automat
     {
+        public void PrintAutomatToFile()
+        {
+            _ws.WriteLine(FromStringListToString(_states));
+
+            for (int i = 0; i < _inputSignals.Count(); i++)
+            {
+                _ws.Write(_inputSignals[i]);
+                _ws.Write(FromStringListToString(_signalsActions[i]));
+                _ws.Write("\n");
+            }
+        }
+
         public override void GetDataFromFile()
         {
             _states = _rs.ReadLine().Split(';').Skip(1).ToList();
@@ -24,6 +36,42 @@ namespace lw2
                 _inputSignals.Add(input[0]);
                 _signalsActions.Add(input.Skip(1).ToList());
             }
+        }
+
+        protected HashSet<string> GetAccessibleStateSet()
+        {
+            HashSet<string> accessibleState = new HashSet<string>();
+            for (int j = 0; j < _signalsActions.Count(); j++)
+            {
+                for (int i = 0; i < _signalsActions[j].Count(); i++)
+                {
+                    string elem = _signalsActions[j][i].Split("/")[0];
+                    if (!accessibleState.Contains(elem))
+                    {
+                        accessibleState.Add(elem);
+                        if (accessibleState.Count() == _states.Count())
+                        {
+                            return new HashSet<string>(_states);
+                        }
+                    }
+
+                }
+            }
+
+            return accessibleState;
+        }
+
+        protected HashSet<string> GetInaccessibleStateSet(ref HashSet<string> accessibleState)
+        {
+            HashSet<string> inaccessibleState = new HashSet<string>();
+            foreach (string state in _states)
+            {
+                if (!accessibleState.Contains(state))
+                {
+                    inaccessibleState.Add(state);
+                }
+            }
+            return inaccessibleState;
         }
 
         protected override void RemoveInaccessibleStates()
@@ -45,15 +93,16 @@ namespace lw2
         }
 
 
-        // Set param to save new state
+        // Set some param
         //
         private void SetNewStateParam(
             ref Dictionary<string, int> oldStateToNewStateLink,
             ref int newStateCount,
             ref List<string> newStates,
+            ref List<string> takenStates,
             Dictionary<string, int> StateToEquivalentClassLink)
         {
-            string commonNewStateName = "q";
+            string commonNewStateName = "S";
             List<int> alredyAddToNewStates = new List<int>();
 
             foreach(KeyValuePair<string, int> entry in StateToEquivalentClassLink)
@@ -61,6 +110,7 @@ namespace lw2
                 if (!alredyAddToNewStates.Contains(entry.Value))
                 {
                     alredyAddToNewStates.Add(entry.Value);
+                    takenStates.Add(entry.Key);
                     oldStateToNewStateLink[entry.Key] = newStateCount;
                     newStates.Add(commonNewStateName + newStateCount.ToString());
                     newStateCount++;
@@ -201,11 +251,13 @@ namespace lw2
             Dictionary<string, int> oldStateToNewStateLink = new Dictionary<string, int>();
             int newStateCount = 0;
             List<string> newStates = new List<string>();
+            List<string> takenStates = new List<string>();
 
             SetNewStateParam(
                 ref oldStateToNewStateLink,
                 ref newStateCount,
                 ref newStates,
+                ref takenStates,
                 oldStateToEquivalentClassLink);
 
             //2 create new signalsActions by states
@@ -215,7 +267,7 @@ namespace lw2
                 List<string> elem = new List<string>();
                 for(int index = 0; index < newStates.Count(); index++)
                 {
-                    string oldAction = _signalsActions[j][index];
+                    string oldAction = _signalsActions[j][_states.IndexOf(takenStates[index])];
                     string newAction = newStates[oldStateToNewStateLink[(oldAction.Split("/")[0])]] +
                         "/" + oldAction.Split("/")[1];
                     elem.Add(newAction);
