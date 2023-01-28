@@ -1,0 +1,6 @@
+PROGRAM
+VAR:
+  Id, ergot, Bsss: INTEGER;
+BEGIN
+ID = sdf+124+dfa+(r+q); // qwrqwr BEGIN
+END;
