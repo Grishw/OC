@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 
 namespace NDToD
@@ -13,6 +14,9 @@ namespace NDToD
         private List<string> _outputSignals = new List<string>();
         private List<string> _states = new List<string>();
         private List<string> _inputSignals = new List<string>();
+
+
+        private Dictionary<string, string> _newDeterminedStateToStateFromWhichCreated = new Dictionary<string, string>();
 
         // _signalsActions:
         //
@@ -39,7 +43,6 @@ namespace NDToD
         //fill _eclose
         private void FillEclose()
         {
-            
             //inicialize _eclose
             for (int i = 0; i < _states.Count; i++)
             {
@@ -183,12 +186,15 @@ namespace NDToD
                 newStates = new List<string>();
 
                 //
+                //FILL NEW STATES
+                //
                 //if haves e in input simbols
                 //first step
                 //
                 if (_isHave_e_InputSignal)
                 {
                     newStates = new List<string>() { eclosures[_states[0]] };
+                    _newDeterminedStateToStateFromWhichCreated[new string(eclosures[_states[0]].OrderBy(ch => ch).ToArray()).Replace(",", "")] = eclosures[_states[0]];
                     _isHave_e_InputSignal = false;
                 }
                 // no e in input simbols: or other steps after first
@@ -200,43 +206,36 @@ namespace NDToD
                     {
                         for (int i = eclosures.Count; i < inputSignalActions.Count; i++)
                         {
-                            if (!newSet.Contains(new string(inputSignalActions[i].OrderBy(ch => ch).ToArray())) && inputSignalActions[i] != "")
+                            string state_2 = new string(inputSignalActions[i].OrderBy(ch => ch).ToArray()).Replace(",","");// < add
+
+                            if(newStates.Contains(inputSignalActions[i]))
+                            {
+                                continue;
+                            }
+
+                            if (!newSet.Contains(state_2) && inputSignalActions[i] != "")// 
                             {
                                 newStates.Add(inputSignalActions[i]);
+                            }
+                            else if (newSet.Contains(state_2) && inputSignalActions[i] != "")
+                            {
+                                // IF NEW DETERMINE STATE ALREDY CONTAIN IN DETERMINE STATE set link
+                                if (!_newDeterminedStateToStateFromWhichCreated.ContainsKey(state_2))
+                                {
+                                    _newDeterminedStateToStateFromWhichCreated[state_2] = inputSignalActions[i];
+                                }
+                                inputSignalActions[i] = state_2;
                             }
                         }
                     }
                 }
 
-
-
                 foreach (string newState in newStates)
                 {
                     string determinedState = newState.Replace(",", "");
+
                     // Сортировка символов по алфавиту
                     determinedState = new string(determinedState.OrderBy(ch => ch).ToArray());
-
-                    
-                    if (determinedStates.Contains(determinedState) && determinedStates.IndexOf(determinedState) >= _states.Count)
-                    {
-                        // Убираем запятые stateGoTo -1
-                        foreach (List<string> inputSignalActions in determinedSignalsActions)
-                        {
-                            ISet<char> determinedStateCharHashSet = determinedState.ToHashSet<char>();
-                            for (int indexOfStateGoTo = 0; indexOfStateGoTo < inputSignalActions.Count; indexOfStateGoTo++)
-                            {
-                                string stateGoTo = inputSignalActions[indexOfStateGoTo];
-                                if (stateGoTo.Replace(",", "").ToHashSet<char>().SetEquals(determinedStateCharHashSet))
-                                {
-                                    inputSignalActions[indexOfStateGoTo] = determinedState;
-                                }
-                            }
-                        }
-                        continue;
-                    }
-
-
-
                     determinedOutputSignals.Add("");
                     ISet<string> determinedStatesCharHashSet = newState.Split(",").ToHashSet<string>();
                     for (int i = 0; i < finishStates.Count; i++)
@@ -308,14 +307,11 @@ namespace NDToD
                                     }
                                 }
                             }
-
-
                         }
                     }
                     determinedStates.Add(determinedState);
                 }
             } while (newStates.Count != 0);
-
 
             // new name for created in process state
             //
@@ -325,6 +321,7 @@ namespace NDToD
             for (int i = eclosures.Count; i < determinedStates.Count; i++)
             {
                 newStatesToDeterminedStates.Add(determinedStates[i], "S" + (i - eclosures.Count));
+                Console.WriteLine(_newDeterminedStateToStateFromWhichCreated[determinedStates[i]] + " -> " + newStatesToDeterminedStates[determinedStates[i]]);
             }
 
             List<List<string>> newSignalsActions = new List<List<string>>();
@@ -342,7 +339,7 @@ namespace NDToD
                 {
                     if (inputSignalActions[i] != "")
                     {
-                        inputSignalActions[i] = newStatesToDeterminedStates[new string(inputSignalActions[i].OrderBy(ch => ch).ToArray())];
+                        inputSignalActions[i] = newStatesToDeterminedStates[new string(inputSignalActions[i].OrderBy(ch => ch).ToArray()).Replace(",", "")];
                     }
                 }
             }
@@ -352,7 +349,6 @@ namespace NDToD
             _states = newStatesToDeterminedStates.Values.ToList();
             _signalsActions = newSignalsActions;
             _outputSignals = determinedOutputSignals;
-
         }
 
 

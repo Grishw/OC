@@ -6,11 +6,11 @@ using System.Linq;
 
 namespace lw1
 {
-	public class CMealy : Automat
+    public class CMealy : Automat
     {
         const string NEW_POINT_NAME_PART = "S";
 
-        public void PrintAutomatToFile()
+        public override void PrintAutomatToFile()
         {
             _ws.WriteLine(FromStringListToString(_states));
 

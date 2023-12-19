@@ -28,7 +28,7 @@ namespace lw2
             for (int i = 0; i < _outputSignals.Count(); i++)
             {
                 _outputSignals[i] = _outputSignals[i] == ""
-                            ? "-1"
+                            ? NO_OUTPUT_SIGNAL
                             : _outputSignals[i];
             }
             _states = _rs.ReadLine().Split(';').Skip(1).ToList();
@@ -127,6 +127,7 @@ namespace lw2
                 {
                     oldStateToNewStateLink[entry.Key] = alredyAddToNewStates.IndexOf(entry.Value);
                 }
+                Console.WriteLine(entry.Key + " -> " + newStates[oldStateToNewStateLink[entry.Key]]);
             }
         }
 
@@ -163,7 +164,8 @@ namespace lw2
         //   i -> _state(list)
         // [j][i] -> outputSignal
         //
-        private List<List<string>> CreateFirstSignalActionToEquivalentClassLink()
+        private List<List<string>> CreateFirstSignalActionToEquivalentClassLink(
+            Dictionary<string, int> oldStateToEquivalentClassLink)
         {
             List<List<string>> firstSignalActionLinkEquivalentClass = new List<List<string>>();
 
@@ -172,7 +174,11 @@ namespace lw2
                 List<string> elem = new List<string>();
                 for (int i = 0; i < _signalsActions[j].Count(); i++)
                 {
-                    string quivalentClass = _outputSignals[_states.IndexOf(_signalsActions[j][i])];
+                    string quivalentClass = NO_STATE_LINK;
+                    if (_states.IndexOf(_signalsActions[j][i]) != -1)
+                    {
+                       quivalentClass = oldStateToEquivalentClassLink[_states[_states.IndexOf(_signalsActions[j][i])]].ToString();
+                    }
                     elem.Add(quivalentClass);
                 }
                 firstSignalActionLinkEquivalentClass.Add(elem);
@@ -215,6 +221,60 @@ namespace lw2
 
         }
 
+        Dictionary<string, int> GetFirstStateToEquivalentClassLink()
+        {
+            
+
+            Dictionary<string, int> EquivalentClass = new Dictionary<string, int>();
+            int index = 0;
+            for (int i = 0; i < _outputSignals.Count(); i++)
+            {
+                string key = _outputSignals[i];
+
+                if (!EquivalentClass.ContainsKey(key))
+                {
+                    EquivalentClass[key] = index;
+                    index++;
+                }
+            }
+
+            Dictionary<string, int> FirstStateToEquivalentClassLink = new Dictionary<string, int>();
+            for (int i = 0; i < _outputSignals.Count(); i++)
+            {
+                string key = _outputSignals[i];
+
+
+                FirstStateToEquivalentClassLink[_states[i]] = EquivalentClass[key];
+            }
+
+            return FirstStateToEquivalentClassLink;
+        }
+
+        void CHECK(
+            List<string>  states,
+            List<List<string>> signalsActions,
+            Dictionary<string, int> oldStateToEquivalentClassLink,
+            Dictionary<string, int> newStateToEquivalentClassLink)
+        {
+
+            int IndexMax = signalsActions.Count();
+
+            Console.Write("State class\n");
+            for (int i = 0; i < states.Count(); i++)
+            {
+                Console.Write(oldStateToEquivalentClassLink[states[i]] + " -> " + states[i].ToString() + ": ");
+
+                for (int index = 0; index < IndexMax; index++)
+                {
+                    Console.Write(signalsActions[index][i].ToString() + " ");
+
+                }
+                Console.Write(" -> " + newStateToEquivalentClassLink[states[i]] + "\n");
+            };
+
+            Console.Write("\n");
+        }
+
         public override void Minimize()
         {
             //flag of end
@@ -226,22 +286,27 @@ namespace lw2
             // const on run time
             List<List<int>> signalActionToStateLink = GetSignalActionToStateLink();
 
+
+
             // prepare some data
-            List<List<string>> firstSignalActionLinkEquivalentClass = CreateFirstSignalActionToEquivalentClassLink();
+            Dictionary<string, int> firstOldStateToEquivalentClassLink = GetFirstStateToEquivalentClassLink();
+
+            List<List<string>> firstSignalActionLinkEquivalentClass = CreateFirstSignalActionToEquivalentClassLink(firstOldStateToEquivalentClassLink);
 
             Dictionary<string, int> firstStateToEquivalentClassLink = GetFirstStateToEquivalentClassLink(
                  firstSignalActionLinkEquivalentClass);
 
+            
             // first step
             Dictionary<string, int> oldEquivalentClasses = GetEquivalentClasses(
-                 firstSignalActionLinkEquivalentClass,
-                 firstStateToEquivalentClassLink);
+                 firstSignalActionLinkEquivalentClass, firstStateToEquivalentClassLink);
+            
 
             Dictionary<string, int> oldStateToEquivalentClassLink = GetStateToEquivalentClassLink(
-                 oldEquivalentClasses,
-                 firstSignalActionLinkEquivalentClass,
+                 oldEquivalentClasses, firstSignalActionLinkEquivalentClass,
                  firstStateToEquivalentClassLink);
 
+            CHECK(_states, firstSignalActionLinkEquivalentClass, firstOldStateToEquivalentClassLink, oldStateToEquivalentClassLink);
             // next steps
             do
             {
@@ -250,19 +315,19 @@ namespace lw2
                  oldStateToEquivalentClassLink);
 
                 Dictionary<string, int> newEquivalentClasses = GetEquivalentClasses(
-                     signalActionLinkEquivalentClass,
-                     oldStateToEquivalentClassLink);
+                     signalActionLinkEquivalentClass, oldStateToEquivalentClassLink);
 
                 Dictionary<string, int> newStateToEquivalentClassLink = GetStateToEquivalentClassLink(
-                     newEquivalentClasses,
-                     signalActionLinkEquivalentClass,
+                     newEquivalentClasses, signalActionLinkEquivalentClass,
                      oldStateToEquivalentClassLink);
+
+
+                CHECK(_states, signalActionLinkEquivalentClass, oldStateToEquivalentClassLink, newStateToEquivalentClassLink);
 
                 if (Enumerable.SequenceEqual(oldStateToEquivalentClassLink, newStateToEquivalentClassLink))
                 {
                     isMinimizeEnd = true;
                 }
-
 
                 oldEquivalentClasses = newEquivalentClasses;
                 oldStateToEquivalentClassLink = newStateToEquivalentClassLink;
@@ -278,12 +343,8 @@ namespace lw2
             List<string> newOutputeSignal = new List<string>();
 
             SetNewStateParam(
-                ref oldStateToNewStateLink,
-                ref newStateCount,
-                ref newStates,
-                ref takenStates,
-                ref newOutputeSignal,
-                oldStateToEquivalentClassLink);
+                ref oldStateToNewStateLink, ref newStateCount, ref newStates,
+                ref takenStates, ref newOutputeSignal, oldStateToEquivalentClassLink);
 
             //2 create new signalsActions by states
             List<List<string>> newSignalsActions = new List<List<string>>();
@@ -293,7 +354,11 @@ namespace lw2
                 for (int index = 0; index < newStates.Count(); index++)
                 {
                     string oldAction = _signalsActions[j][_states.IndexOf(takenStates[index])];
-                    string newAction = newStates[oldStateToNewStateLink[oldAction]];
+                    string newAction = "";
+                    if (oldAction != "")
+                    {
+                        newAction = newStates[oldStateToNewStateLink[oldAction]];
+                    }
                     elem.Add(newAction);
                 }
                 newSignalsActions.Add(elem);

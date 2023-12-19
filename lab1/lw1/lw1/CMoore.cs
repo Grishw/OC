@@ -10,7 +10,7 @@ namespace lw1
     {
         private static List<string> _outputSignals = new List<string>();
 
-        public void PrintAutomatToFile()
+        public override void PrintAutomatToFile()
         {
             _ws.WriteLine(FromStringListToString(_outputSignals));
             _ws.WriteLine(FromStringListToString(_states));

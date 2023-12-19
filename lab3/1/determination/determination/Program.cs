@@ -17,10 +17,8 @@ namespace determination
             {
                 case LEFT_GRAMMAR_TYPE:
                     return new Moore(LEFT_GRAMMAR_TYPE, fileData);
-                    break;
                 case RIGHT_GRAMMAR_TYPE:
                     return new Moore(RIGHT_GRAMMAR_TYPE, fileData);
-                    break;
                 default:
                     throw new ArgumentException("Unavailable conversion type");
             }

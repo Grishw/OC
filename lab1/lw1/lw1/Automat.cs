@@ -11,7 +11,6 @@ namespace lw1
         protected StreamWriter _ws;
 
         protected static List<string> _inputSignals = new List<string>();
-
         protected static List<string> _states = new List<string>();
         protected static List<List<string>> _signalsActions = new List<List<string>>();
 
@@ -27,10 +26,9 @@ namespace lw1
             return str;
         }
 
-        public virtual void GetDataFromFile()
-        {
-
-        }
+        public virtual void GetDataFromFile(){}
+        public virtual void PrintAutomatToFile() {}
+        
     }
 }
 

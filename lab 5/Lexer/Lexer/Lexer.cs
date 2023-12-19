@@ -25,11 +25,11 @@ namespace Lexer
             { TokenType.LES, "LES"},
             { TokenType.GRT, "GRT"},
             { TokenType.LES_OR_EQV, "LES_OR_EQV"},
-            { TokenType.GRT_OR_EQV, "LES_OR_EQV"},
-            { TokenType.AND, "LES_OR_EQV"},
-            { TokenType.OR, "LES_OR_EQV"},
-            { TokenType.APOSTROF, "LES_OR_EQV"},
-            { TokenType.COMMENTARY, "LES_OR_EQV"}
+            { TokenType.GRT_OR_EQV, "GRT_OR_EQV"},
+            { TokenType.AND, "AND"},
+            { TokenType.OR, "OR"},
+            { TokenType.STRING, "STRING"},
+            { TokenType.COMMENTARY, "COMMENTARY"}
 
         };
 
@@ -92,9 +92,7 @@ namespace Lexer
 
         public Dictionary<char, TokenType> charToTokenSecondPart = new Dictionary<char, TokenType>()
         {
-
             { '/', TokenType.COMMENTARY},
-            //some part of oter that can be seporator
             { '=', TokenType.NEQV},
             { '&', TokenType.AND},
             { '|', TokenType.OR},
@@ -118,13 +116,7 @@ namespace Lexer
             _inputFile = inputF;
         }
 
-        public void EndWork()
-        {
-            _rs.Close();
-        }
-
-
-        public string getNextLexem()
+        public Token getNextLexem()
 		{
 			if (_lineIndex >= (_lineFromFileSize -1))
 			{
@@ -141,53 +133,64 @@ namespace Lexer
 
                 if(stringToTokenType[_buffer] == TokenType.COMMENTARY)
                 {
-                    _lineIndex = _lineFromFileSize - 1;
+                    GetLineToTheEnd();
+                    return new Token(_lineCount, _lineIndex - _buffer.Length + 1,
+                        _buffer, tokenTypeToString[TokenType.COMMENTARY]);
                 }
-
-                Console.WriteLine($"in line {_lineCount} pos {_lineIndex - _buffer.Length + 1} :  {_buffer} - {tokenTypeToString[stringToTokenType[_buffer]]}");
-                return _buffer;
+                return new Token(_lineCount, _lineIndex - _buffer.Length + 1,
+                    _buffer, tokenTypeToString[stringToTokenType[_buffer]]);
             }
 
             if (_buffer.Length == 1 && charToTokenType.ContainsKey(_buffer[0]))
             {
-                Console.WriteLine($"in line {_lineCount} pos {_lineIndex - _buffer.Length + 1} : {_buffer} - {tokenTypeToString[charToTokenType[_buffer[0]]]}");
-                return _buffer;
+                if (charToTokenType[_buffer[0]] == TokenType.APOSTROF)
+                {
+                    GetStringToTheEnd();
+                    return new Token(_lineCount, _lineIndex - _buffer.Length + 1,
+                        _buffer, tokenTypeToString[TokenType.STRING]);
+                }
+                return new Token(_lineCount, _lineIndex - _buffer.Length + 1,
+                    _buffer, tokenTypeToString[charToTokenType[_buffer[0]]]);
             }
 
             if (stringToTokenType.ContainsKey(_buffer))
             {
-                Console.WriteLine($"in line {_lineCount} pos {_lineIndex - _buffer.Length + 1} : {_buffer} - {tokenTypeToString[stringToTokenType[_buffer]]}");
-                return _buffer;
+                return new Token(_lineCount, _lineIndex - _buffer.Length + 1,
+                    _buffer, tokenTypeToString[stringToTokenType[_buffer]]);
             }
 
             try
             {
                 int numVal = Int32.Parse(_buffer);
-                Console.WriteLine($"in line {_lineCount} pos {_lineIndex - _buffer.Length + 1} : {_buffer} - {tokenTypeToString[TokenType.NUMBER]}");
-                return _buffer;
+                return new Token(_lineCount, _lineIndex - _buffer.Length + 1,
+                    _buffer, tokenTypeToString[TokenType.NUMBER]);
 
             }
             catch (FormatException e)
             {
-                Console.WriteLine($"in line {_lineCount} pos {_lineIndex - _buffer.Length + 1} : {_buffer} - {tokenTypeToString[TokenType.IDENTIFIER]}");
-                return _buffer;
+                return new Token(_lineCount, _lineIndex - _buffer.Length + 1,
+                    _buffer, tokenTypeToString[TokenType.IDENTIFIER]);
             }
 		}
 
-		private void GetNexLineFromFile()
+
+        public void EndWork()
+        {
+            _rs.Close();
+        }
+
+
+        private void GetNexLineFromFile()
 		{
                 if (_rs.EndOfStream)
                 {
-                    Console.WriteLine("Incorrect operation, no more lexem in file");
-                    throw new Exception("Incorrect operation, no more lexem in file");
+                    throw new Exception("No more lexem in file");
                 }
 
                 _linefromFile = _rs.ReadLine();
 				_lineIndex = 0;
                 _lineCount += 1;
                 _lineFromFileSize = _linefromFile.Length;
-
-
         }
 
 		private void DeleteStartSpases()
@@ -210,6 +213,29 @@ namespace Lexer
             while ((_lineIndex < _lineFromFileSize)
             && !charToTokenType.ContainsKey(_linefromFile[_lineIndex])
             && !charToTokenType.ContainsKey(_buffer[0]));
+        }
+
+        private void GetLineToTheEnd()
+        {
+            do
+            {
+                _buffer += _linefromFile[_lineIndex];
+                _lineIndex += 1;
+            }
+            while (_lineIndex < _lineFromFileSize);
+        }
+
+
+        private void GetStringToTheEnd()
+        {
+            do
+            {
+                _buffer += _linefromFile[_lineIndex];
+                _lineIndex += 1;
+            }
+            while ((_lineIndex < _lineFromFileSize)
+            && !(charToTokenType.ContainsKey(_buffer[_buffer.Length - 1])
+            && charToTokenType[_buffer[_buffer.Length - 1]] == TokenType.APOSTROF));
         }
     }
 }

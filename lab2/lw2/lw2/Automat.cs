@@ -7,11 +7,12 @@ namespace lw2
 {
 	public class Automat
 	{
+        protected const string NO_OUTPUT_SIGNAL = "-33";
+        protected const string NO_STATE_LINK = "-1";
         protected StreamReader _rs;
         protected StreamWriter _ws;
 
         protected static List<string> _inputSignals = new List<string>();
-
         protected static List<string> _states = new List<string>();
         protected static List<List<string>> _signalsActions = new List<List<string>>(); 
 
@@ -21,7 +22,15 @@ namespace lw2
 
             foreach (string elem in list)
             {
-                str += $";{elem}";
+                if (elem != NO_OUTPUT_SIGNAL && elem != NO_STATE_LINK)
+                {
+                    str += $";{elem}";
+                }
+                else
+                {
+                    str += $";";
+                }
+               
             }
 
             return str;
@@ -29,7 +38,7 @@ namespace lw2
 
         // Get Dictionary newEquivalentClasses:
         //
-        //   first -> string of (oldClass[i]):(outputSignal[0][i])/(outputSignal[1][i])/(outputSignal[2][i])/...
+        //   first -> string of (oldClass[i]):(outputSignal[0][i])/(outputSignal[1][i])/(outputSignal[2][i])
         //   second -> int index of class
         //
         // {a0} "0:1/2" -> 1
@@ -41,10 +50,11 @@ namespace lw2
              Dictionary<string, int> oldStateToEquivalentClassLink)
         {
             Dictionary<string, int> equivalentClasses = new Dictionary<string, int>();
-            int index = 0;
+            int index = 1;
             for (int i = 0; i < _states.Count(); i++)
             {
-                string key = oldStateToEquivalentClassLink[_states[i]] + ":" + signalActionLinkEquivalentClass[0][i];
+                string key = oldStateToEquivalentClassLink[_states[i]] +
+                    ":" + signalActionLinkEquivalentClass[0][i];
                 for (int j = 1; j < signalActionLinkEquivalentClass.Count(); j++)
                 {
                     key += "/" + signalActionLinkEquivalentClass[j][i];
@@ -108,13 +118,24 @@ namespace lw2
                 List<string> elem = new List<string>();
                 for (int i = 0; i < signalActionLinkState[j].Count(); i++)
                 {
-                    elem.Add(oldStateToEquivalentClassLink[_states[signalActionLinkState[j][i]]].ToString());
+                    string quivalentClass = NO_STATE_LINK;
+                    if (_states.IndexOf(_signalsActions[j][i]) != -1)
+                    {
+                        elem.Add(oldStateToEquivalentClassLink[_states[signalActionLinkState[j][i]]].ToString());
+
+                    }
+                    else
+                    {
+                        elem.Add(quivalentClass);
+                    }
+                    
                 }
                 signalActionLinkEquivalentClass.Add(elem);
             }
 
             return signalActionLinkEquivalentClass;
         }
+
 
         protected virtual void RemoveInaccessibleStates()
         {

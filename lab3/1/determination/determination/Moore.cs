@@ -267,7 +267,6 @@ namespace determination
                         _inputSignals.Add(inputSymbol);
                     }
 
-
                     // add new signalActions to signalsActions authomat
                     // if not some action for this input signal fased befor
                     //
@@ -298,9 +297,7 @@ namespace determination
 
                 }
             }
-
             _outputSignals[1] = FINISH_OUTPUT_SIGNAL;
-
         }
 
 
@@ -320,15 +317,15 @@ namespace determination
                 }
             }
 
-            List<string> newStates = new List<string>(); // list of state that createted in process of determination. shuld be determinated
+            // list of state that createted in process of determination. shuld be determinated
+            List<string> newStates = new List<string>(); 
             List<List<string>> determinedSignalsAction = _signalsActions;
-
-            // 
+ 
             do
             {
                 newStates = new List<string>(); // clear
 
-                // fill new state that shul be determined
+                // fill new state that shuld be determined
                 foreach (List<string> inputSymbolAction in determinedSignalsAction)
                 {
                     foreach (string stateGoTo in inputSymbolAction)
@@ -354,7 +351,6 @@ namespace determination
                     //add new state and signal for it to all that have
                     determinedStates.Add(determinedState);
                     determinedOutputSignals.Add("");
-
 
                     // new determinated state consist of
                     ISet<string> determinedStatesCharHashSet = newState.Split(STATE_DIVIDERS).ToHashSet<string>();
@@ -420,7 +416,6 @@ namespace determination
                 }
             } while (newStates.Count != 0);
 
-
             //clear
             _states = determinedStates;
             _signalsActions = determinedSignalsAction;
@@ -438,8 +433,6 @@ namespace determination
                     throw new ArgumentException("Unavailable grammar type");
             }
 
-
-
             //new name for state
             // old(determinedState) -> new
             Dictionary<string, string> newStatesToDeterminedStates = new Dictionary<string, string>();
@@ -448,8 +441,6 @@ namespace determination
                 newStatesToDeterminedStates.Add(determinedStates[i], NEW_STATE_BASE_NAME + i);
                 Console.WriteLine(determinedStates[i] + " -> " + newStatesToDeterminedStates[determinedStates[i]]);
             }
-
-
 
             // new SignalsAction with new state name
             // old(determinedState) -> new
@@ -467,10 +458,7 @@ namespace determination
 
             _states = newStatesToDeterminedStates.Values.ToList();
             _signalsActions = newSignalsActions;
-            _outputSignals = determinedOutputSignals;
-
-            
-            
+            _outputSignals = determinedOutputSignals;           
         }
 
         public string GetCsvData()

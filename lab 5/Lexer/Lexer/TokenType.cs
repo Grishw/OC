@@ -5,9 +5,8 @@ namespace Lexer
 {
 	public enum TokenType
 	{
-        IDENTIFIER, // <- string
-
-        KEYWORD, // <- string
+        IDENTIFIER,
+        KEYWORD,
         //BEGIN
         //END
         //READ
@@ -26,66 +25,34 @@ namespace Lexer
         //FALSE
         //INTEGER
         //STRING
-
-        NUMBER,// <- char
-        // {1234567890}
-
-        SEPARATOR,// <- char
-        // _, (, ), ;
-
+        NUMBER,
+        SEPARATOR,
         // arithmetic:
         //
-        ADD,// <- char
-        // +
-
-        SUB,// <- char
-        // -
-
-        MUL,// <- char
-        // *
-
-        DIV,// <- char
-        // /
-
-        ASG,// <- char
-        // =
-
+        ADD,
+        SUB,
+        MUL,
+        DIV,
+        ASG,
         // comparison:
         //
-        EQV,// <- string
-        // ==
-
-        NEQV,// <- string
-        // !=
-
-        LES,// <- char
-        // <
-
-        GRT,// <- char
-        // >
-
-        LES_OR_EQV,// <- string
-        // <=
-
-        GRT_OR_EQV,// <- string
-        // >=
-
+        EQV,
+        NEQV,
+        LES,
+        GRT,
+        LES_OR_EQV,
+        GRT_OR_EQV,
         // logical:
         //
-        AND,// <- string
-        // &&
-
-        OR,// <- string
-        // ||
+        AND,
+        OR,
 
         // string :
-        APOSTROF,// <- char
+        APOSTROF,
         // "
-
-        COMMENTARY,// <- string
+        STRING,
+        COMMENTARY,
         // //
-
-        ERROR,
     }
 }
 

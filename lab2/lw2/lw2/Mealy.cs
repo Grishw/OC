@@ -254,11 +254,8 @@ namespace lw2
             List<string> takenStates = new List<string>();
 
             SetNewStateParam(
-                ref oldStateToNewStateLink,
-                ref newStateCount,
-                ref newStates,
-                ref takenStates,
-                oldStateToEquivalentClassLink);
+                ref oldStateToNewStateLink, ref newStateCount, ref newStates,
+                ref takenStates, oldStateToEquivalentClassLink);
 
             //2 create new signalsActions by states
             List<List<string>> newSignalsActions = new List<List<string>>();

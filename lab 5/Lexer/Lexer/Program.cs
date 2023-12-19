@@ -6,24 +6,23 @@ namespace Lexer
 {
     class Program
     {
-        
-
         static void Main(string[] args)
         {
             string inputF = args[0];
-
-            Lexer lex = new Lexer(inputF);
+            Token lexem = new Token();
+            Lexer lexer = new Lexer(inputF);
 
             try
             {
                 while(true)
                 {
-                    inputF = lex.getNextLexem();
+                    lexem = lexer.getNextLexem();
+                    Console.WriteLine($"in line {lexem.y} pos {lexem.x} :  {lexem.lexem}       <- {lexem.stringTokenType}");
                 }
             } catch (Exception e)
             {
-                lex.EndWork();
-                //Console.WriteLine(e);
+                lexer.EndWork();
+                Console.WriteLine(e.Message);
             }
         }
     }

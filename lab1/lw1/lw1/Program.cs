@@ -11,7 +11,6 @@ namespace lw1
         const string MOORE_TO_MEALY = "moore-to-mealy";
         const string ERROR_MODE_MSG = "Unknown mode";
         
-
         static void MooreToMealy(StreamReader rs, StreamWriter ws)
         {
             CMoore moore = new CMoore(rs, ws);
